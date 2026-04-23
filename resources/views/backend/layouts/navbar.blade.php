@@ -12,6 +12,10 @@
         </li> --}}
     </ul>
 
+    <h4 class="font-weight-medium mb-0" style="color: darkcyan;">
+        {{ readConfig('site_name') }}
+    </h4>
+
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
 
@@ -22,6 +26,7 @@
             </a>
         </li>
         @endcan
+
         <!-- Notifications Dropdown Menu -->
         <!-- <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
