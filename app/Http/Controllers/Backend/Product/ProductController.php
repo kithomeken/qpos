@@ -31,8 +31,8 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-
         abort_if(!auth()->user()->can('product_view'), 403);
+
         if ($request->ajax()) {
             $products = Product::latest()->get();
             return DataTables::of($products)
@@ -58,7 +58,7 @@ class ProductController extends Controller
                       <span class="sr-only">Toggle Dropdown</span>
                     </button>
                     <div class="dropdown-menu" role="menu">
-                      <a class="dropdown-item" href="'.route('backend.admin.products.edit', $data->id). '">
+                      <a class="dropdown-item" href="' . route('backend.admin.products.edit', $data->id) . '">
                     <i class="fas fa-edit"></i> Edit
                 </a> <div class="dropdown-divider"></div>
 <form action="' . route('backend.admin.products.destroy', $data->id) . '"method="POST" style="display:inline;">
@@ -86,9 +86,10 @@ class ProductController extends Controller
 
             // Apply filters based on the search term
             $products = $products->where(function ($query) use ($request) {
-                $query->where('name', 'LIKE', "%{$request->search}%")
-                    ->orWhere('sku', $request->search);
+                $query->where('name', 'ILIKE', "%{$request->search}%")
+                    ->orWhere('sku', 'ILIKE', "%{$request->search}%");
             });
+            
             // Get the results
             $products = $products->get();
             // Return the results as a JSON response
