@@ -21,6 +21,7 @@ export default function Purchase() {
     const [shipping, setShipping] = useState(0);
     const [products, setProducts] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
+
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
         const barcodeParam = searchParams.get("barcode");
@@ -92,7 +93,7 @@ export default function Purchase() {
             if (productsData?.data && productsData.data.length) {
                 productsData.data.forEach((product) => {
                     const existingProductIndex = products.findIndex(
-                        (p) => p.id === product.id
+                        (p) => p.id === product.id,
                     );
                     if (existingProductIndex !== -1) {
                         // Product exists, increment qty
@@ -148,7 +149,7 @@ export default function Purchase() {
                     ...product,
                     qty: newQty,
                     subTotal: parseFloat(
-                        (product.purchase_price * newQty).toFixed(2)
+                        (product.purchase_price * newQty).toFixed(2),
                     ),
                 };
             }
@@ -181,7 +182,7 @@ export default function Purchase() {
     const calculateTotals = () => {
         const subTotal = products.reduce(
             (sum, product) => sum + product.subTotal,
-            0
+            0,
         );
         const formattedSubTotal = parseFloat(subTotal.toFixed(2));
         const formattedTax = parseFloat((tax || 0).toFixed(2));
@@ -193,7 +194,7 @@ export default function Purchase() {
                 formattedTax -
                 formattedDiscount +
                 formattedShipping
-            ).toFixed(2)
+            ).toFixed(2),
         );
 
         return {
@@ -252,7 +253,7 @@ export default function Purchase() {
                     window.location.href = "/admin/purchase";
                 } catch (err) {
                     toast.error(
-                        err.response?.data?.message || "An error occurred"
+                        err.response?.data?.message || "An error occurred",
                     );
                 }
             }
@@ -286,8 +287,11 @@ export default function Purchase() {
     // Handle adding selected product to the products list
     const handleProductSelect = (product) => {
         const existingProductIndex = products.findIndex(
-            (p) => p.id === product.id
+            (p) => p.id === product.id,
         );
+
+        console.log("product", product);
+        console.log("existingProductIndex", existingProductIndex);
 
         if (existingProductIndex !== -1) {
             // If product exists, increment quantity
@@ -338,8 +342,8 @@ export default function Purchase() {
                                         onChange={(date) => {
                                             const formattedDate = date
                                                 ? date
-                                                      .toISOString()
-                                                      .split("T")[0]
+                                                    .toISOString()
+                                                    .split("T")[0]
                                                 : null;
                                             setDate(formattedDate);
                                         }}
@@ -400,16 +404,15 @@ export default function Purchase() {
                                 >
                                     <ul className="list-group">
                                         {searchResults.map((product) => (
-                                            <li
-                                                key={product.id}
-                                                className="list-group-item"
-                                                onClick={() =>
-                                                    handleProductSelect(product)
-                                                }
-                                                style={{ cursor: "pointer" }}
-                                            >
-                                                {product.name} - $
-                                                {product.price}
+                                            <li key={product.id} className="list-group-item d-flex align-items-center gap-2" onClick={() => handleProductSelect(product)} onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#F3F4F6")} onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "")} style={{ cursor: "pointer" }}>
+                                                <div className="flex-grow-1">
+                                                    {product.name}
+                                                </div>
+
+                                                <div className="flex-shrink-0 text-secondary">
+                                                    {product.currency}{" "}
+                                                    {product.price}
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
@@ -446,7 +449,7 @@ export default function Purchase() {
                                                         onChange={(e) =>
                                                             handlePriceChange(
                                                                 product.id,
-                                                                e.target.value
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />
@@ -461,14 +464,14 @@ export default function Purchase() {
                                                         onChange={(e) =>
                                                             handleQtyChange(
                                                                 product.id,
-                                                                e.target.value
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />
                                                 </td>
                                                 <td>
                                                     {product.subTotal.toFixed(
-                                                        2
+                                                        2,
                                                     )}
                                                 </td>
                                                 <td>
@@ -476,7 +479,7 @@ export default function Purchase() {
                                                         className="btn btn-danger btn-sm"
                                                         onClick={() =>
                                                             handleDelete(
-                                                                product.id
+                                                                product.id,
                                                             )
                                                         }
                                                     >
@@ -523,7 +526,7 @@ export default function Purchase() {
                                                 <th>Grand Total:</th>
                                                 <td className="text-right">
                                                     {totals.grandTotal.toFixed(
-                                                        2
+                                                        2,
                                                     )}
                                                 </td>
                                             </tr>
@@ -568,7 +571,7 @@ export default function Purchase() {
                                     value={discount}
                                     onChange={(e) =>
                                         setDiscount(
-                                            parseFloat(e.target.value) || 0
+                                            parseFloat(e.target.value) || 0,
                                         )
                                     }
                                     placeholder="Enter discount"
@@ -590,7 +593,7 @@ export default function Purchase() {
                                     value={shipping}
                                     onChange={(e) =>
                                         setShipping(
-                                            parseFloat(e.target.value) || 0
+                                            parseFloat(e.target.value) || 0,
                                         )
                                     }
                                     placeholder="Enter shipping"
