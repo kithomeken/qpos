@@ -10,6 +10,7 @@ use App\Http\Resources\ProductResource;
 use App\Imports\ProductsImport;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Trait\FileHandler;
@@ -35,66 +36,92 @@ class ProductController extends Controller
 
         if ($request->ajax()) {
             $products = Product::latest()->get();
+
             return DataTables::of($products)
                 ->addIndexColumn()
-                ->addColumn('image', fn($data) => '<img src="' . asset('storage/' . $data->image) . '" loading="lazy" alt="' . $data->name . '" class="img-thumb img-fluid" onerror="this.onerror=null; this.src=\'' . asset('assets/images/no-image.png') . '\';" height="80" width="60" />')
+                ->addColumn(
+                    'image',
+                    fn($data) => '<img src="' . asset('storage/' . $data->image) . '" loading="lazy" alt="' . $data->name . '" class="img-thumb img-fluid" onerror="this.onerror=null; this.src=\'' . asset('assets/images/no-image.png') . '\';" height="80" width="60" />'
+                )
                 ->addColumn('name', fn($data) => $data->name)
                 ->addColumn(
                     'price',
-                    fn($data) => $data->discounted_price .
-                        ($data->price > $data->discounted_price
-                            ? '<br><del>' . $data->price . '</del>'
-                            : '')
+                    fn($data) => $data->discounted_price . (
+                        $data->price > $data->discounted_price
+                        ? '<br><del>' . $data->price . '</del>'
+                        : ''
+                    )
                 )
                 ->addColumn('quantity', fn($data) => $data->quantity . ' ' . optional($data->unit)->short_name)
                 ->addColumn('created_at', fn($data) => $data->created_at->format('d M, Y'))
                 ->addColumn('status', fn($data) => $data->status
                     ? '<span class="badge bg-primary">Active</span>'
                     : '<span class="badge bg-danger">Inactive</span>')
-                ->addColumn('action', function ($data) {
-                    return '<div class="btn-group">
-                    <button type="button" class="btn bg-gradient-primary btn-flat">Action</button>
-                    <button type="button" class="btn bg-gradient-primary btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
-                      <span class="sr-only">Toggle Dropdown</span>
-                    </button>
+                ->addColumn(
+                    'action',
+                    function ($data) {
+                        return '<div class="btn-group">
+                        <button type="button" class="btn bg-gradient-primary btn-flat">Action</button>
+                        <button type="button" class="btn bg-gradient-primary btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+
                     <div class="dropdown-menu" role="menu">
-                      <a class="dropdown-item" href="' . route('backend.admin.products.edit', $data->id) . '">
-                    <i class="fas fa-edit"></i> Edit
-                </a> <div class="dropdown-divider"></div>
-<form action="' . route('backend.admin.products.destroy', $data->id) . '"method="POST" style="display:inline;">
-                   ' . csrf_field() . '
-                    ' . method_field("DELETE") . '
-<button type="submit" class="dropdown-item" onclick="return confirm(\'Are you sure ?\')"><i class="fas fa-trash"></i> Delete</button>
-                  </form>
-<div class="dropdown-divider"></div>
-  <a class="dropdown-item" href="' . route('backend.admin.purchase.create', ['barcode' => $data->sku]) . '">
-                <i class="fas fa-cart-plus"></i> Purchase
-            </a>
-                    </div>
-                  </div>';
-                })
+                        <a class="dropdown-item" href="' . route('backend.admin.products.edit', $data->id) . '">
+                            <i class="fas fa-edit"></i> Edit
+                        </a> 
+
+                        <div class="dropdown-divider"></div>
+                            <form action="' . route('backend.admin.products.destroy', $data->id) . '"method="POST" style="display:inline;">
+                                ' . csrf_field() . '
+                                ' . method_field("DELETE") . '
+
+                                <button type="submit" class="dropdown-item" onclick="return confirm(\'Are you sure ?\')"><i class="fas fa-trash"></i> Delete</button>
+                            </form>
+                            
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="' . route('backend.admin.purchase.create', ['barcode' => $data->sku]) . '">
+                                <i class="fas fa-cart-plus"></i> Purchase
+                            </a>
+                        </div>
+                    </div>';
+                    }
+                )
                 ->rawColumns(['image', 'name', 'price', 'quantity', 'status', 'created_at', 'action'])
                 ->toJson();
         }
+
         if ($request->wantsJson()) {
             $request->validate([
-                'search' => 'required|string|max:255',
+                'search' => 'required|string|min:1|max:255',
             ]);
 
+            # Get Default Currency
+            $defaultCurrency = Currency::where('active', true)
+                ->first();
+
             // Initialize the query
-            $products = Product::query();
+            $products = Product::selectRaw("id, name, price, quantity");
 
             // Apply filters based on the search term
             $products = $products->where(function ($query) use ($request) {
                 $query->where('name', 'ILIKE', "%{$request->search}%")
                     ->orWhere('sku', 'ILIKE', "%{$request->search}%");
             });
-            
+
             // Get the results
-            $products = $products->get();
+            $products = $products->get()->map(function ($product) use ($defaultCurrency) {
+                // Add default currency
+                $product->currency = $defaultCurrency->symbol;
+                return $product;
+            });
+
+            // dd($products);
+
             // Return the results as a JSON response
             return ProductResource::collection($products);
         }
+
         return view('backend.products.index');
     }
 
