@@ -80,7 +80,7 @@ export default function Purchase() {
         }
 
         // Optional: Uncomment if you want to show loading state
-        // setLoading(true);
+        setLoading(true);
 
         try {
             const res = await axios.get("/admin/products", {
@@ -184,7 +184,7 @@ export default function Purchase() {
             (sum, product) => sum + product.subTotal,
             0,
         );
-        const formattedSubTotal = parseFloat(subTotal.toFixed(2));
+        const formattedSubTotal = parseFloat(Number(subTotal).toFixed(2));
         const formattedTax = parseFloat((tax || 0).toFixed(2));
         const formattedDiscount = parseFloat((discount || 0).toFixed(2));
         const formattedShipping = parseFloat((shipping || 0).toFixed(2));
@@ -207,6 +207,7 @@ export default function Purchase() {
     };
 
     const totals = calculateTotals();
+
     const handleSubmit = async () => {
         if (totals.grandTotal <= 0) {
             //    toast.error("Total must be greater than zero.");
@@ -283,28 +284,27 @@ export default function Purchase() {
         // Call the async function inside useEffect
         getProducts();
     }, [searchTerm]);
+
     // Handle adding selected product to the products list
     // Handle adding selected product to the products list
     const handleProductSelect = (product) => {
-        const existingProductIndex = products.findIndex(
-            (p) => p.id === product.id,
-        );
+        setProducts((prevProducts) => {
+            const existingProduct = prevProducts.find((p) => p.id === product.id);
 
-        console.log("product", product);
-        console.log("existingProductIndex", existingProductIndex);
+            if (existingProduct) {
+                // Return a NEW array with a NEW object for the updated item
+                return prevProducts.map((p) =>
+                    p.id === product.id
+                        ? {
+                            ...p,
+                            qty: p.qty + 1,
+                            subTotal: p.purchase_price * (p.qty + 1)
+                        }
+                        : p
+                );
+            }
 
-        if (existingProductIndex !== -1) {
-            // If product exists, increment quantity
-            setProducts((prevProducts) => {
-                const updatedProducts = [...prevProducts];
-                updatedProducts[existingProductIndex].qty += 1;
-                updatedProducts[existingProductIndex].subTotal =
-                    updatedProducts[existingProductIndex].purchase_price *
-                    updatedProducts[existingProductIndex].qty;
-                return updatedProducts;
-            });
-        } else {
-            // Add new product to the list
+            // Add new product
             const newProduct = {
                 id: product.id,
                 name: product.name,
@@ -314,13 +314,14 @@ export default function Purchase() {
                 qty: 1,
                 subTotal: product.purchase_price,
             };
-            setProducts((prevProducts) => [...prevProducts, newProduct]);
-        }
 
-        // Clear search term and results
+            return [...prevProducts, newProduct];
+        });
+
         setSearchTerm("");
         setSearchResults([]);
     };
+
     return (
         <>
             <div className="container-fluid">
@@ -470,9 +471,7 @@ export default function Purchase() {
                                                     />
                                                 </td>
                                                 <td>
-                                                    {product.subTotal.toFixed(
-                                                        2,
-                                                    )}
+                                                    {Number(product.subTotal).toFixed(2)}
                                                 </td>
                                                 <td>
                                                     <button
@@ -501,33 +500,31 @@ export default function Purchase() {
                                             <tr>
                                                 <th>Subtotal:</th>
                                                 <td className="text-right">
-                                                    {totals.subTotal.toFixed(2)}
+                                                    {Number(totals.subTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Tax:</th>
                                                 <td className="text-right">
-                                                    {totals.tax.toFixed(2)}
+                                                    {Number(totals.tax).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Discount:</th>
                                                 <td className="text-right">
-                                                    {totals.discount.toFixed(2)}
+                                                    {Number(totals.discount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Shipping:</th>
                                                 <td className="text-right">
-                                                    {totals.shipping.toFixed(2)}
+                                                    {Number(totals.shipping).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Grand Total:</th>
                                                 <td className="text-right">
-                                                    {totals.grandTotal.toFixed(
-                                                        2,
-                                                    )}
+                                                    {Number(totals.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                         </tbody>
