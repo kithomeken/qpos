@@ -101,7 +101,7 @@ class ProductController extends Controller
                 ->first();
 
             // Initialize the query
-            $products = Product::selectRaw("id, name, price, quantity");
+            $products = Product::query();
 
             // Apply filters based on the search term
             $products = $products->where(function ($query) use ($request) {
