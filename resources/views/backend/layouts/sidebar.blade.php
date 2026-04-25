@@ -334,7 +334,7 @@ $route = request()->route()->getName();
                     <li class="nav-item">
                         <a href="{{ route('backend.admin.payments.index') }}"
                             class="nav-link {{ request()->routeIs([ 'backend.admin.payments.index', 'backend.admin.payments.create', 'backend.admin.payments.edit']) ? 'active' : '' }}">
-                            <i class="fas fa-coins nav-icon"></i>
+                            <i class="fas fa-credit-card nav-icon"></i>
                             <p>Payment Methods</p>
                         </a>
                     </li>
