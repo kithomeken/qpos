@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Cart from "./Cart";
@@ -26,9 +26,8 @@ export default function Pos() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false);
-    const fullDomainWithPort = `${protocol}//${hostname}${
-        port ? `:${port}` : ""
-    }`;
+    const fullDomainWithPort = `${protocol}//${hostname}${port ? `:${port}` : ""
+        }`;
     const getProducts = useCallback(
         async (search = "", page = 1, barcode = "") => {
             setLoading(true);
@@ -110,7 +109,7 @@ export default function Pos() {
     useEffect(() => {
         if (searchBarcode) {
             setProducts([]);
-           getProducts("", currentPage, searchBarcode);
+            getProducts("", currentPage, searchBarcode);
         }
     }, [searchBarcode]);
 
@@ -222,6 +221,7 @@ export default function Pos() {
             }
         });
     }
+
     return (
         <>
             <div className="card">
@@ -268,99 +268,91 @@ export default function Pos() {
                                 setCartUpdated={setCartUpdated}
                                 cartUpdated={cartUpdated}
                             />
+
                             <div className="card">
                                 <div className="card-body">
-                                    <div className="row text-bold mb-1">
-                                        <div className="col">Sub Total:</div>
-                                        <div className="col text-right mr-2">
-                                            {total}
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <span className="text-secondary fw-medium">Sub Total</span>
+                                        <span className="fw-bold">
+                                            {Number(total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <span className="text-secondary fw-medium flex-grow-1">
+                                            Award Discount:
+                                        </span>
+
+                                        <div className="flex-shrink-0" style={{ width: "150px" }}>
+                                            <div className="input-group input-group-sm">
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm fw-bold text-end border-start-0"
+                                                    placeholder="0.00"
+                                                    min={0}
+                                                    disabled={total <= 0}
+                                                    value={orderDiscount || ""}
+                                                    onFocus={(e) => e.target.select()} // Select all text on click for faster typing
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        const numValue = parseFloat(value);
+
+                                                        // Allow clearing the input (empty string) or valid numbers within range
+                                                        if (value === "" || (numValue >= 0 && numValue <= total)) {
+                                                            setOrderDiscount(value);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="row text-bold mb-1">
-                                        <div className="col">Discount:</div>
-                                        <div className="col text-right mr-2">
-                                            <input
-                                                type="number"
-                                                className="form-control form-control-sm"
-                                                placeholder="Enter discount"
-                                                min={0}
-                                                disabled={total <= 0}
-                                                value={orderDiscount}
-                                                onChange={(e) => {
-                                                    const value =
-                                                        e.target.value;
-                                                    if (
-                                                        parseFloat(value) >
-                                                            total ||
-                                                        parseFloat(value) < 0
-                                                    ) {
-                                                        return;
-                                                    }
-                                                    setOrderDiscount(value);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="row text-bold mb-1">
-                                        <div className="col">
-                                            Apply Fractional Discount:
-                                        </div>
-                                        <div className="col text-right mr-2">
-                                            <input
-                                                type="checkbox"
-                                                className="form-control-sm"
-                                                disabled={total <= 0}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        const fractionalPart =
-                                                            total % 1;
-                                                        setOrderDiscount(
-                                                            fractionalPart?.toFixed(
-                                                                2
-                                                            )
-                                                        );
-                                                    } else {
-                                                        setOrderDiscount(0);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="row text-bold mb-1">
-                                        <div className="col">Total:</div>
-                                        <div className="col text-right mr-2">
-                                            {updateTotal}
-                                        </div>
-                                    </div>
-                                    <div className="row text-bold mb-1">
-                                        <div className="col">Paid:</div>
-                                        <div className="col text-right mr-2">
-                                            <input
-                                                type="number"
-                                                className="form-control form-control-sm"
-                                                placeholder="Enter paid"
-                                                min={0}
-                                                disabled={total <= 0}
-                                                value={paid}
-                                                onChange={(e) => {
-                                                    const value =
-                                                        e.target.value;
-                                                    if (
-                                                        parseFloat(value) < 0 ||
-                                                        parseFloat(value) >
+
+                                    <hr className="my-3 opacity-50" />
+
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <span className="text-secondary fw-medium flex-grow-1">
+                                            Amount Paid:
+                                        </span>
+
+                                        <div className="flex-shrink-0" style={{ width: "150px" }}>
+                                            <div className="input-group input-group-sm">
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Enter paid"
+                                                    min={0}
+                                                    disabled={total <= 0}
+                                                    value={paid}
+                                                    onChange={(e) => {
+                                                        const value =
+                                                            e.target.value;
+                                                        if (
+                                                            parseFloat(value) < 0 ||
+                                                            parseFloat(value) >
                                                             updateTotal
-                                                    ) {
-                                                        return;
-                                                    }
-                                                    setPaid(value);
-                                                }}
-                                            />
+                                                        ) {
+                                                            return;
+                                                        }
+                                                        setPaid(value);
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="row text-bold">
-                                        <div className="col">Due:</div>
-                                        <div className="col text-right mr-2">
-                                            {due}
+
+                                    {/* Final Totals Section */}
+                                    <div className="bg-light rounded p-3 mt-3">
+                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                            <span className="h5 mb-0 fw-bold">Total Due</span>
+                                            <span className="h4 mb-0 fw-bold text-dark">
+                                                {Number(updateTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        <div className="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-2">
+                                            <span className="small fw-bold text-uppercase">Balance</span>
+                                            <span className={`h5 mb-0 fw-bold ${due > 0 ? 'text-danger' : 'text-success'}`}>
+                                                {Number(due).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -375,6 +367,7 @@ export default function Pos() {
                                         Clear Cart
                                     </button>
                                 </div>
+
                                 <div className="col">
                                     <button
                                         onClick={() => {
