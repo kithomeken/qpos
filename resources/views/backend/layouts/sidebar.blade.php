@@ -266,6 +266,7 @@ $route = request()->route()->getName();
                 </ul>
             </li>
             @endif
+
             {{-- settings --}}
             @if (auth()->user()->hasAnyPermission([
             //currency
@@ -274,18 +275,21 @@ $route = request()->route()->getName();
             'currency_update',
             'currency_delete',
             'currency_set_default',
+
             //role
             'role_create',
             'role_view',
             'role_update',
             'role_delete',
             'permission_view',
+
             //user
             'user_create',
             'user_view',
             'user_update',
             'user_delete',
             'user_suspend',
+
             //setting
             'website_settings',
             'contact_settings',
@@ -325,15 +329,27 @@ $route = request()->route()->getName();
                         </a>
                     </li>
                     @endif
+                    
+                    @if (auth()->user()->hasAnyPermission(['payment_create', 'payment_view', 'payment_update', 'payment_delete']))
+                    <li class="nav-item">
+                        <a href="{{ route('backend.admin.payments.index') }}"
+                            class="nav-link {{ request()->routeIs([ 'backend.admin.payments.index', 'backend.admin.payments.create', 'backend.admin.payments.edit']) ? 'active' : '' }}">
+                            <i class="fas fa-coins nav-icon"></i>
+                            <p>Payment Methods</p>
+                        </a>
+                    </li>
+                    @endif
+
                     @if (auth()->user()->hasAnyPermission(['currency_create','currency_view','currency_update','currency_delete']))
                     <li class="nav-item">
                         <a href="{{ route('backend.admin.currencies.index') }}"
                             class="nav-link {{ request()->routeIs([ 'backend.admin.currencies.index', 'backend.admin.currencies.create', 'backend.admin.currencies.edit']) ? 'active' : '' }}">
                             <i class="fas fa-coins nav-icon"></i>
-                            <p>Currency</p>
+                            <p>Currencies</p>
                         </a>
                     </li>
                     @endif
+
                     @if (auth()->user()->hasAnyPermission([
                     'role_create',
                     'role_view',
