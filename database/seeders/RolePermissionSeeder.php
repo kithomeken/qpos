@@ -103,7 +103,13 @@ class RolePermissionSeeder extends Seeder
             'website_status_settings',
             'invoice_settings',
 
+            // Payment Methods
+            'payment_create',
+            'payment_view',
+            'payment_update',
+            'payment_delete',
         ];
+
         $admin = Role::where('name', 'Admin')->first();
         for ($i = 0; $i < count($permissions); $i++) {
             $permission = Permission::firstOrCreate(['name' => $permissions[$i]]);
@@ -161,6 +167,5 @@ class RolePermissionSeeder extends Seeder
             $permission = Permission::firstOrCreate(['name' => $permissionName]);
             $salesRole->givePermissionTo($permission);
         }
-
     }
 }
