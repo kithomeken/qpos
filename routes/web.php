@@ -75,6 +75,7 @@ Route::prefix('admin')->as('backend.admin.')->middleware(['admin'])->group(funct
     # Payments Methods Resource
     Route::resource('payments', PaymentMethodsController::class);
     Route::get('payments/default/{id}', [PaymentMethodsController::class, 'setDefault'])->name('payments.setDefault');
+    Route::get('payments/activate/{id}', [PaymentMethodsController::class, 'activate'])->name('payments.activate');
 
     Route::match(['get', 'post'], 'import/products', [ProductController::class,'import'])->name('products.import');
     Route::get('currencies/default/{id}', [CurrencyController::class, 'setDefault'])->name('currencies.setDefault');

@@ -53,31 +53,58 @@ class PaymentMethodsController extends Controller
                     ? '<span class="badge bg-primary">Active</span>'
                     : '<span class="badge bg-danger">Disabled</span>')
                 ->addColumn('action', function ($data) {
+                    // Logic for Toggle Button (Activate vs Disable)
+                    if ($data->active) {
+                        $statusToggle = '
+                            <form action="' . route('backend.admin.payments.destroy', $data->id) . '" method="POST" style="display:inline;">
+                                ' . csrf_field() . '
+                                ' . method_field("DELETE") . '
+                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm(\'Are you sure you want to disable this method?\')">
+                                    <i class="fas fa-ban"></i> Disable
+                                </button>
+                            </form>';
+                    } else {
+                        $statusToggle = '
+                            <a class="dropdown-item text-success" href="' . route('backend.admin.payments.activate', $data->id) . '" onclick="return confirm(\'Activate this payment method?\')">
+                                <i class="fas fa-check-circle"></i> Activate
+                            </a>';
+                    }
+
+                    // Logic for Set Default (Only show/allow if active and not already default)
+                    $defaultButton = '';
+                    if ($data->active && !$data->primary_method) {
+                        $defaultButton = '
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" onclick="return confirm(\'Set this as the default payment method?\')" href="' . route('backend.admin.payments.setDefault', $data->id) . '">
+                                <i class="fas fa-star text-warning"></i> Set Default
+                            </a>';
+                    } elseif ($data->primary_method) {
+                        $defaultButton = '
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item disabled" disabled>
+                                <i class="fas fa-certificate text-primary"></i> Current Default
+                            </button>';
+                    }
+
+                    // Assemble the Dropdown
                     return '<div class="btn-group">
-                        <button type="button" class="btn bg-gradient-primary btn-flat">Action</button>
-                        <button type="button" class="btn bg-gradient-primary btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                        <button type="button" class="btn bg-gradient-primary btn-sm btn-flat">Action</button>
+                        <button type="button" class="btn bg-gradient-primary btn-sm btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
                             <span class="sr-only">Toggle Dropdown</span>
                         </button>
 
-                        <div class="dropdown-menu" role="menu">
-                            <a class="dropdown-item" href="' . route('backend.admin.payments.edit', $data->id) . '" ' . ' >
+                        <div class="dropdown-menu shadow" role="menu">
+                            <a class="dropdown-item" href="' . route('backend.admin.payments.edit', $data->id) . '">
                                 <i class="fas fa-edit"></i> Edit
                             </a> 
+                            
                             <div class="dropdown-divider"></div>
-
-                            <form action="' . route('backend.admin.payments.destroy', $data->id) . '"method="POST" style="display:inline;">
-                                ' . csrf_field() . '
-                                ' . method_field("DELETE") . '
-                                <button type="submit" class="dropdown-item" onclick="return confirm(\'Are you sure ?\')">
-                                    <i class="fas fa-trash"></i> Disable
-                                </button>
-                            </form>
-                            <div class="dropdown-divider"></div>
-
-                            <a class="dropdown-item" onclick="return confirm(\'Are you sure to set Default ?\')" href="' . route('backend.admin.payments.setDefault', $data->id) . '" ' . ' >
-                                <i class="fas fa-edit"></i> Set Default
-                            </a>
-                        </div>';
+                            
+                            ' . $statusToggle . '
+                            
+                            ' . $defaultButton . '
+                        </div>
+                    </div>';
                 })
                 ->rawColumns(['name', 'code', 'surcharge_type', 'surcharge_value', 'status', 'action'])
                 ->toJson();
@@ -99,7 +126,6 @@ class PaymentMethodsController extends Controller
 
         return view('backend.settings.payments.create', compact('defaultCurrency'));
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -229,8 +255,28 @@ class PaymentMethodsController extends Controller
         return redirect()->back()->with('success', "Payment method '{$paymentMethod->name}' has been disabled.");
     }
 
+    public function activate($id)
+    {
+        // Authorization Check
+        abort_if(!auth()->user()->can('payment_update'), 403);
+
+        // Find and Update
+        $paymentMethod = PaymentMethods::findOrFail($id);
+
+        $paymentMethod->update([
+            'active' => true
+        ]);
+
+        // 3. Return with feedback
+        return redirect()
+            ->back()
+            ->with('success', "Payment method '{$paymentMethod->name}' has been activated successfully.");
+    }
+
     public function setDefault($id)
     {
+        abort_if(!auth()->user()->can('payment_update'), 403);
+
         // Find the payment method
         $paymentMethod = PaymentMethods::findOrFail($id);
 
