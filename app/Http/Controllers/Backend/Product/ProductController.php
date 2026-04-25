@@ -44,16 +44,16 @@ class ProductController extends Controller
                     fn($data) => '<img src="' . asset('storage/' . $data->image) . '" loading="lazy" alt="' . $data->name . '" class="img-thumb img-fluid" onerror="this.onerror=null; this.src=\'' . asset('assets/images/no-image.png') . '\';" height="80" width="60" />'
                 )
                 ->addColumn('name', fn($data) => $data->name)
+                ->addColumn('brand', fn($data) => $data->brand->name)
                 ->addColumn(
                     'price',
-                    fn($data) => $data->discounted_price . (
+                    fn($data) => number_format($data->discounted_price, 2) . (
                         $data->price > $data->discounted_price
-                        ? '<br><del>' . $data->price . '</del>'
+                        ? '<br><del>' . number_format($data->price, 2) . '</del>'
                         : ''
                     )
                 )
-                ->addColumn('quantity', fn($data) => $data->quantity . ' ' . optional($data->unit)->short_name)
-                ->addColumn('created_at', fn($data) => $data->created_at->format('d M, Y'))
+                ->addColumn('quantity', fn($data) => number_format($data->quantity, 2) . ' ' . optional($data->unit)->short_name)
                 ->addColumn('status', fn($data) => $data->status
                     ? '<span class="badge bg-primary">Active</span>'
                     : '<span class="badge bg-danger">Inactive</span>')
@@ -87,7 +87,7 @@ class ProductController extends Controller
                     </div>';
                     }
                 )
-                ->rawColumns(['image', 'name', 'price', 'quantity', 'status', 'created_at', 'action'])
+                ->rawColumns(['image', 'name', 'brand', 'price', 'quantity', 'status', 'action'])
                 ->toJson();
         }
 
