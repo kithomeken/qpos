@@ -124,10 +124,12 @@ export default function Cart({ carts, setCartUpdated, cartUpdated }) {
                                                 </button>
                                             </td>
                                             <td className="text-right">
-                                                {item?.product?.discounted_price}
+                                                {Number(item?.product?.discounted_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+
                                                 {item?.product?.price >
-                                                item?.product
-                                                    ?.discounted_price ? (
+                                                    item?.product
+                                                        ?.discounted_price ? (
                                                     <>
                                                         <br />
                                                         <del>
@@ -139,7 +141,7 @@ export default function Cart({ carts, setCartUpdated, cartUpdated }) {
                                                 )}
                                             </td>
                                             <td className="text-right">
-                                                {item?.row_total}
+                                                {Number(item?.row_total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                         </tr>
                                     ))}
