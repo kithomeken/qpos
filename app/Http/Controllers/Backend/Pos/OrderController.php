@@ -20,6 +20,7 @@ class OrderController extends Controller
     {
         if ($request->ajax()) {
             $orders = Order::with('customer')->get();
+            
             return DataTables::of($orders)
                 ->addIndexColumn()
                 ->addColumn('saleId', fn($data) => "#" . $data->id)
@@ -93,6 +94,7 @@ class OrderController extends Controller
         ]);
         $totalAmountOrder = 0;
         $orderDiscount = $request->order_discount;
+
         foreach ($carts as $cart) {
             $mainTotal = $cart->product->price * $cart->quantity;
             $totalAfterDiscount = $cart->product->discounted_price * $cart->quantity;
@@ -110,15 +112,22 @@ class OrderController extends Controller
             $cart->product->quantity = $cart->product->quantity - $cart->quantity;
             $cart->product->save();
         }
+
         $total = $totalAmountOrder - $orderDiscount;
         $due = $total - $request->paid;
+
         $order->sub_total = $totalAmountOrder;
         $order->discount = $orderDiscount;
         $order->paid = $request->paid;
         $order->total = round((float)$total, 2);
         $order->due = round((float)$due, 2);
         $order->status = round((float)$due, 2) <= 0;
+
+        # Order Reference Number
+        $order->reference_no = Order::generateOrderReference();
+
         $order->save();
+
         //create order transaction
         if ($request->paid > 0) {
             $orderTransaction = $order->transactions()->create([
@@ -216,8 +225,9 @@ class OrderController extends Controller
 
     public function posInvoice($id)
     {
-        $order = Order::with(['customer', 'products.product'])->findOrFail($id);
-        $maxWidth = readConfig('receiptMaxwidth')??'300px';
+        $order = Order::with(['customer', 'products.product', 'products.product.unit'])->findOrFail($id);
+        $maxWidth = readConfig('receiptMaxwidth') ?? '300px';
+
         return view('backend.orders.pos-invoice', compact('order', 'maxWidth'));
     }
 }
