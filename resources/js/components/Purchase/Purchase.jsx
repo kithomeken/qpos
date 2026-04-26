@@ -438,7 +438,9 @@ export default function Purchase() {
                                         {products.map((product, index) => (
                                             <tr key={product.id}>
                                                 <td>{index + 1}</td>
-                                                <td>{product.name}</td>
+                                                <td className="text-start">
+                                                    {product.name}
+                                                </td>
                                                 <td className="d-flex align-items-center justify-content-center">
                                                     <input
                                                         type="number"
@@ -471,7 +473,7 @@ export default function Purchase() {
                                                     />
                                                 </td>
                                                 <td>
-                                                    {Number(product.subTotal).toFixed(2)}
+                                                    {Number(product.subTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td>
                                                     <button
