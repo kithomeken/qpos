@@ -21,11 +21,11 @@
             <thead>
               <tr>
                 <th data-orderable="false">#</th>
-                <th></th>
+                <!-- <th></th> -->
                 <th>Name</th>
-                <th>Price{{currency()->symbol??''}}</th>
+                <th>Brand Name</th>
+                <th>Price {{currency()->symbol??''}}</th>
                 <th>Stock</th>
-                <th>Created</th>
                 <th>Status</th>
                 <th data-orderable="false">Action</th>
               </tr>
@@ -55,13 +55,17 @@
           data: 'DT_RowIndex',
           name: 'DT_RowIndex'
         },
-        {
-          data: 'image',
-          name: 'image'
-        },
+        // {
+        //   data: 'image',
+        //   name: 'image'
+        // },
         {
           data: 'name',
           name: 'name'
+        },
+        {
+          data: 'brand',
+          name: 'brand'
         },
         {
           data: 'price',
@@ -70,10 +74,6 @@
         {
           data: 'quantity',
           name: 'quantity'
-        },
-        {
-          data: 'created_at',
-          name: 'created_at'
         },
         {
           data: 'status',
