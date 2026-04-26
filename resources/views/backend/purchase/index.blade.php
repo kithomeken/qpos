@@ -22,9 +22,14 @@
               <tr>
                 <th data-orderable="false">#</th>
                 <th>Supplier</th>
-                <th>ID</th>
+                <!-- <th>ID</th> -->
+                <th>Sub Total</th>
+                <th>Discount</th>
+                <th>Shipping</th>
+                <th>Tax</th>
                 <th>Total {{currency()->symbol??''}}</th>
-                <th>Date</th>
+                <th>Purchase Date</th>
+                <th>Purchased By</th>
                 <th data-orderable="false">
                   Action
                 </th>
@@ -58,18 +63,37 @@
           data: 'supplier',
           name: 'supplier'
         },
-
+        // {
+        //   data: 'id',
+        //   name: 'id'
+        // },
         {
-          data: 'id',
-          name: 'id'
+          data: 'sub_total',
+          name: 'sub_total',
+        },
+        {
+          data: 'discount',
+          name: 'discount',
+        },
+        {
+          data: 'shipping',
+          name: 'shipping',
+        },
+        {
+          data: 'tax',
+          name: 'tax',
         },
         {
           data: 'total',
           name: 'total',
         },
         {
-          data: 'created_at',
-          name: 'created_at'
+          data: 'purchase_date',
+          name: 'purchase_date'
+        },
+        {
+          data: 'purchased_by',
+          name: 'purchased_by'
         },
         {
           data: 'action',
