@@ -32,7 +32,7 @@ class StoreProductRequest extends FormRequest
             'unit_id' => 'required|exists:units,id',
             'price' => 'required|numeric|min:0',
             'discount' => 'nullable|numeric|min:0|required_with:discount_type',
-            'discount_type' => 'nullable|required_with:discount',
+            'discount_type' => 'nullable',
             'purchase_price' => 'required|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
             'expire_date' => 'nullable|date',
