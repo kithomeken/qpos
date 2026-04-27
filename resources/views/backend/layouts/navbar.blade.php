@@ -1,78 +1,52 @@
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
+<nav class="main-header navbar navbar-expand navbar-white navbar-light border-bottom shadow-sm py-2">
+    <ul class="navbar-nav align-items-center">
         <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+            <a class="nav-link text-dark" data-widget="pushmenu" href="#" role="button">
+                <i class="fas fa-bars"></i>
+            </a>
         </li>
-        {{-- <li class="nav-item d-none d-sm-inline-block">
-            <a href="index3.html" class="nav-link">Home</a>
-        </li> --}}
-        {{-- <li class="nav-item d-none d-sm-inline-block">
-            <a href="#" class="nav-link">Contact</a>
-        </li> --}}
+        <li class="nav-item d-none d-md-block ml-2">
+            <h5 class="mb-0 font-weight-bold text-uppercase tracking-tight" style="color: #008b8b;">
+                 @yield('title')
+            </h5>
+        </li>
     </ul>
 
-    <h4 class="font-weight-medium mb-0" style="color: darkcyan;">
-        {{ readConfig('site_name') }}
-    </h4>
-
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
+    <ul class="navbar-nav ml-auto align-items-center">
 
         @can('sale_create')
-        <li class="nav-item dropdown">
-            <a class="nav-link btn bg-gradient-primary text-white" href="{{route('backend.admin.cart.index')}}">
-                <i class="fas fa-cart-plus"> POS</i>
+        <li class="nav-item mr-3">
+            <a class="btn bg-gradient-primary btn-sm text-white rounded-pill px-3 shadow-sm d-flex align-items-center" 
+               href="{{route('backend.admin.cart.index')}}">
+                <i class="fas fa-cash-register mr-2"></i>
+                <span class="font-weight-bold">POS</span>
             </a>
         </li>
         @endcan
 
-        <!-- Notifications Dropdown Menu -->
-        <!-- <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="far fa-bell"></i>
-                <span class="badge badge-warning navbar-badge">15</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                <span class="dropdown-item dropdown-header">15 Notifications</span>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-envelope mr-2"></i> 4 new messages
-                    <span class="float-right text-muted text-sm">3 mins</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-users mr-2"></i> 8 friend requests
-                    <span class="float-right text-muted text-sm">12 hours</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-file mr-2"></i> 3 new reports
-                    <span class="float-right text-muted text-sm">2 days</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
-            </div>
-        </li> -->
-        <li class="nav-item">
-            <a class="nav-link" data-widget="fullscreen" href="#" role="button">
-                <i class="fas fa-expand-arrows-alt"></i>
+        <li class="nav-item d-none d-sm-block">
+            <a class="nav-link text-muted" data-widget="fullscreen" href="#" role="button">
+                <i class="fas fa-expand"></i>
             </a>
         </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="fas fa-user-circle"></i>
-                <i class="fas fa-angle-double-down"></i>
+        
+        <li class="nav-item dropdown ml-2">
+            <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" aria-expanded="false">
+                <div class="user-avatar-wrapper mr-2">
+                    <i class="fas fa-user-circle fa-lg text-secondary"></i>
+                </div>
+                <i class="fas fa-chevron-down small text-muted"></i>
             </a>
-            <div class="dropdown-menu ">
-                <a href="{{ route('backend.admin.profile') }}" class="dropdown-item dropdown-footer">
-                    <i class="fas fa-address-card"></i>
-                    Profile
+            <div class="dropdown-menu dropdown-menu-right shadow border-0 mt-2">
+                <div class="dropdown-header text-uppercase font-weight-bold small">User Account</div>
+                <a href="{{ route('backend.admin.profile') }}" class="dropdown-item py-2">
+                    <i class="fas fa-user-cog mr-2 text-muted"></i>
+                    Profile Settings
                 </a>
                 <div class="dropdown-divider"></div>
-                <a href="{{ route('logout') }}" class="dropdown-item dropdown-footer">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
+                <a href="{{ route('logout') }}" class="dropdown-item py-2 text-danger">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Sign Out
                 </a>
             </div>
         </li>
