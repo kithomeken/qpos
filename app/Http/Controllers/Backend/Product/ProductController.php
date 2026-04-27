@@ -101,12 +101,22 @@ class ProductController extends Controller
                 ->first();
 
             // Initialize the query
-            $products = Product::query();
+            $products = Product::query()
+                // Join the brands table
+                ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+                // Select all product data and specifically alias the brand name
+                ->select([
+                    'products.*',
+                    'brands.name as brand'
+                ]);
 
-            // Apply filters based on the search term
-            $products = $products->where(function ($query) use ($request) {
-                $query->where('name', 'ILIKE', "%{$request->search}%")
-                    ->orWhere('sku', 'ILIKE', "%{$request->search}%");
+            // Apply the search filters
+            $products->where(function ($query) use ($request) {
+                $search = "%{$request->search}%";
+
+                $query->where('products.name', 'ILIKE', $search)
+                    ->orWhere('products.sku', 'ILIKE', $search)
+                    ->orWhere('brands.name', 'ILIKE', $search);
             });
 
             // Get the results

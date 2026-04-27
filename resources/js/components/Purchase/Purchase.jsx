@@ -370,13 +370,11 @@ export default function Purchase() {
                                     <div className="position-absolute w-100 shadow-lg rounded mt-1" style={{ zIndex: 1000, left: 0, right: 0 }}>
                                         <div className="list-group">
                                             {searchResults.map((product) => (
-                                                <button
-                                                    key={product.id}
-                                                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2"
-                                                    onClick={() => handleProductSelect(product)}
-                                                >
+                                                <button key={product.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" onClick={() => handleProductSelect(product)} >
                                                     <div>
-                                                        <h6 className="mb-0 font-weight-bold">{product.name}</h6>
+                                                        <h6 className="mb-0 font-weight-bold">
+                                                            {product.name} <span className="text-muted small">{product.brand}</span>
+                                                        </h6>
                                                         <small className="text-muted">Stock: {product.quantity} | SKU: {product.sku}</small>
                                                     </div>
                                                     <span className="text-muted font-weigh">
@@ -485,7 +483,7 @@ export default function Purchase() {
                                     <label className="small text-muted mb-1">Discount</label>
                                     <input type="number" className="form-control form-control-sm text-right text-danger" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} onWheel={(e) => e.target.blur()} />
                                 </li>
-                                
+
                                 <li className="list-group-item px-0 bg-transparent border-0">
                                     <label className="small text-muted mb-1">Shipping</label>
                                     <input type="number" className="form-control form-control-sm text-right" value={shipping} onChange={(e) => setShipping(parseFloat(e.target.value) || 0)} onWheel={(e) => e.target.blur()} />
