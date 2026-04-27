@@ -29,6 +29,14 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /**
+     * Get the payment method associated with the order.
+     */
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethods::class);
+    }
+
     public function getTotalItemAttribute()
     {
         return $this->products()->sum('quantity');
@@ -37,7 +45,7 @@ class Order extends Model
     public static function generateOrderReference()
     {
         // Characters that are easy to read (Excluded: I, L, 1, 0, O)
-        $characters = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $characters = '1234567890';
         $finalCode = '';
 
         // Generate a random 13-character string from our clean set
