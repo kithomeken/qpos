@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend\Pos;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Models\PaymentMethods;
 use App\Models\PosCart;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -18,34 +19,68 @@ class CartController extends Controller
                 ->latest('created_at')
                 ->get()
                 ->map(function ($item) {
-                    // Calculate row total for each item
-                    $item->row_total = round(($item->quantity * $item->product->discounted_price),2);
+                    // Access the product's computed attribute (getDiscountedPriceAttribute)
+                    $discountedPrice = $item->product->discounted_price;
+
+                    // Inject brand name directly into the item for easier React access
+                    $item->brand = $item->product->brand->name;
+                    $item->currency = currency()->symbol;
+
+                    // Calculate row total
+                    $item->row_total = round(($item->quantity * $discountedPrice), 2);
+
                     return $item;
                 });
+
             $total = $cartItems->sum('row_total');
+
+            $paymentMethods = PaymentMethods::selectRaw('name, code, surcharge_type, surcharge_value, primary_method as primary')
+                ->where('active', true)
+                ->orderBy('primary', 'desc')
+                ->get();
+
             return response()->json([
-                'carts' => $cartItems,
-                'total' => round($total, 2)
+                'carts'     => $cartItems,
+                'total'     => round($total, 2),
+                'wallets'   => $paymentMethods,
+                'currency'  => currency()->symbol,
             ]);
         }
-        // clear cart
-        PosCart::where('user_id', auth()->id())->delete();
+
+        // Do not clear cart. Let user do this manually
+        // PosCart::where('user_id', auth()->id())->delete();
+
         return view('backend.cart.index');
     }
+
     public function getProducts(Request $request)
     {
+        // Select product with brand names
+        $products = Product::query()->active()->stocked()
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select([
+                'products.*',
+                'brands.name as brand'
+            ]);
 
-        $products = Product::query()->active()->stocked();
-        // Search by name if provided
-        $products->when($request->search, function ($query, $search) {
-            $query->where('name', 'LIKE', "%{$search}%");
+        // Single search query to return the same data set
+        $products->where(function ($query) use ($request) {
+            $search = "%{$request->search}%";
+
+            $query->where('products.name', 'ILIKE', $search)
+                ->orWhere('products.sku', 'ILIKE', $search)
+                ->orWhere('brands.name', 'ILIKE', $search)
+                ->orWhere('products.sku', 'ILIKE', $search);
         });
 
-        // Search by barcode if provided
-        $products->when($request->barcode, function ($query, $barcode) {
-            $query->where('sku', $barcode);
+        // Return a list of 5 products that match to reduce load time
+        // and improve UI/UX
+        $products = $products->latest()->paginate(5)->map(function ($product) {
+            // Add default currency
+            $product->currency = currency()->symbol;
+            return $product;
         });
-        $products = $products->latest()->paginate(96);
+
         if (request()->wantsJson()) {
             return ProductResource::collection($products);
         }
@@ -112,6 +147,7 @@ class CartController extends Controller
         $cart->save();
         return response()->json(['message' => 'Cart Updated successfully'], 200);
     }
+
     public function decrement(Request $request)
     {
         $request->validate([
@@ -125,6 +161,7 @@ class CartController extends Controller
         $cart->save();
         return response()->json(['message' => 'Cart Updated successfully'], 200);
     }
+
     public function delete(Request $request)
     {
         $request->validate([
@@ -136,6 +173,7 @@ class CartController extends Controller
 
         return response()->json(['message' => 'Item successfully deleted'], 200);
     }
+    
     public function empty()
     {
         $deletedCount = PosCart::where('user_id', auth()->id())->delete();
