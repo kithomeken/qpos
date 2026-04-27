@@ -66,7 +66,7 @@ class Product extends Model
     }
     public function scopeActive($query)
     {
-        return $query->where('status', 1);
+        return $query->where('products.status', 1);
     }
     public function scopeStocked($query)
     {
