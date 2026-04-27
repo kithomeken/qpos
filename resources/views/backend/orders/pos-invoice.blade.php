@@ -73,12 +73,34 @@
                     <td>Sub Total:</td>
                     <td style="text-align: right;">{{ number_format($order->sub_total, 2) }}</td>
                 </tr>
+
                 @if($order->discount > 0)
                 <tr>
                     <td>Discount:</td>
                     <td style="text-align: right;">-{{ number_format($order->discount, 2) }}</td>
                 </tr>
                 @endif
+
+                @if ($order->surcharge_type <> 'none')
+                    <tr>
+                    <td>Surcharge:</td>
+                    <td style="text-align: right;">
+                        @if($order->surcharge_type === 'percentage')
+                        {{ number_format($order->surcharge_value, 1) }}%
+                        @elseif($order->surcharge_type === 'fixed')
+                        Fixed
+                        @else
+                        None
+                        @endif
+                    </td>
+                </tr>
+                @endif
+
+                <tr>
+                    <td>Surcharge Amount:</td>
+                    <td style="text-align: right;">{{ number_format($order->surcharge_amount, 2) }}</td>
+                </tr>
+
                 <tr style="font-size: 16px;">
                     <td><strong>GRAND TOTAL:</strong></td>
                     <td style="text-align: right;"><strong>{{ number_format($order->total, 2) }}</strong></td>
