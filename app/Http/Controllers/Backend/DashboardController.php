@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\SupportTicket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -34,7 +35,7 @@ class DashboardController extends Controller
 
         $startDate = Carbon::now()->subDays(30)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
-        if($request->has('daterange')) {
+        if ($request->has('daterange')) {
             $dates = explode(' to ', $request->query('daterange'));
 
             if (count($dates) == 2) {
@@ -43,27 +44,32 @@ class DashboardController extends Controller
             }
         }
         $dailyTotals = OrderTransaction::selectRaw('DATE(created_at) as date, SUM(amount) as total_amount')
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->orderBy('date', 'DESC')
-        ->get();
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'DESC')
+            ->get();
         $dates = $dailyTotals->pluck('date')->toArray();
         $totalAmounts = $dailyTotals->pluck('total_amount')->toArray();
         $data['dates'] = $dates;
         $data['totalAmounts'] = $totalAmounts;
-        $data['dateRange'] = 'from '. $startDate . ' to ' . $endDate;
+        $data['dateRange'] = 'from ' . $startDate . ' to ' . $endDate;
 
 
         $currentYear = now()->year;
         $data['currentYear'] = $currentYear;
 
-        $salesData = OrderTransaction::selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month, SUM(amount) as total_amount")
-        ->whereYear('created_at', $currentYear)
-        ->groupBy('month')
-        ->orderBy('month', 'ASC')
-        ->pluck('total_amount', 'month')
-        ->toArray();
-        
+        // Determine the date format based on the active driver
+        $driver = DB::getDriverName();
+        $format = ($driver === 'pgsql') ? "TO_CHAR(created_at, 'YYYY-MM')" : 'DATE_FORMAT(created_at, "%Y-%m")';
+
+        // Fetch data in a single chain
+        $salesData = OrderTransaction::selectRaw("$format as month, SUM(amount) as total_amount")
+            ->whereYear('created_at', $currentYear)
+            ->groupBy('month')
+            ->orderBy('month', 'ASC')
+            ->pluck('total_amount', 'month')
+            ->toArray();
+
         $tempMonths = [];
         $tempTotalAmountMonth = [];
         for ($i = 1; $i <= 12; $i++) {
