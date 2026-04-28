@@ -17,7 +17,6 @@ class StartUpSeeder extends Seeder
      */
     public function run(): void
     {
-
         $user = User::create([
             'name' => 'Mr Admin',
             'email' => 'demo@qtecsolution.net',
@@ -25,11 +24,13 @@ class StartUpSeeder extends Seeder
             'username' => uniqid()
         ]);
 
+        # Default Customer
         Customer::create([
             'name' => "Walking Customer",
             'phone' => "012345678",
         ]);
 
+        # Default supplier
         Supplier::create([
             'name' => "Own Supplier",
             'phone' => "012345678",
