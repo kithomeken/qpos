@@ -21,6 +21,7 @@ export default function Purchase() {
     const [shipping, setShipping] = useState(0);
     const [products, setProducts] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
+
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
         const barcodeParam = searchParams.get("barcode");
@@ -79,7 +80,7 @@ export default function Purchase() {
         }
 
         // Optional: Uncomment if you want to show loading state
-        // setLoading(true);
+        setLoading(true);
 
         try {
             const res = await axios.get("/admin/products", {
@@ -92,7 +93,7 @@ export default function Purchase() {
             if (productsData?.data && productsData.data.length) {
                 productsData.data.forEach((product) => {
                     const existingProductIndex = products.findIndex(
-                        (p) => p.id === product.id
+                        (p) => p.id === product.id,
                     );
                     if (existingProductIndex !== -1) {
                         // Product exists, increment qty
@@ -148,7 +149,7 @@ export default function Purchase() {
                     ...product,
                     qty: newQty,
                     subTotal: parseFloat(
-                        (product.purchase_price * newQty).toFixed(2)
+                        (product.purchase_price * newQty).toFixed(2),
                     ),
                 };
             }
@@ -181,9 +182,9 @@ export default function Purchase() {
     const calculateTotals = () => {
         const subTotal = products.reduce(
             (sum, product) => sum + product.subTotal,
-            0
+            0,
         );
-        const formattedSubTotal = parseFloat(subTotal.toFixed(2));
+        const formattedSubTotal = parseFloat(Number(subTotal).toFixed(2));
         const formattedTax = parseFloat((tax || 0).toFixed(2));
         const formattedDiscount = parseFloat((discount || 0).toFixed(2));
         const formattedShipping = parseFloat((shipping || 0).toFixed(2));
@@ -193,7 +194,7 @@ export default function Purchase() {
                 formattedTax -
                 formattedDiscount +
                 formattedShipping
-            ).toFixed(2)
+            ).toFixed(2),
         );
 
         return {
@@ -206,6 +207,7 @@ export default function Purchase() {
     };
 
     const totals = calculateTotals();
+
     const handleSubmit = async () => {
         if (totals.grandTotal <= 0) {
             //    toast.error("Total must be greater than zero.");
@@ -252,7 +254,7 @@ export default function Purchase() {
                     window.location.href = "/admin/purchase";
                 } catch (err) {
                     toast.error(
-                        err.response?.data?.message || "An error occurred"
+                        err.response?.data?.message || "An error occurred",
                     );
                 }
             }
@@ -282,25 +284,27 @@ export default function Purchase() {
         // Call the async function inside useEffect
         getProducts();
     }, [searchTerm]);
+
     // Handle adding selected product to the products list
     // Handle adding selected product to the products list
     const handleProductSelect = (product) => {
-        const existingProductIndex = products.findIndex(
-            (p) => p.id === product.id
-        );
+        setProducts((prevProducts) => {
+            const existingProduct = prevProducts.find((p) => p.id === product.id);
 
-        if (existingProductIndex !== -1) {
-            // If product exists, increment quantity
-            setProducts((prevProducts) => {
-                const updatedProducts = [...prevProducts];
-                updatedProducts[existingProductIndex].qty += 1;
-                updatedProducts[existingProductIndex].subTotal =
-                    updatedProducts[existingProductIndex].purchase_price *
-                    updatedProducts[existingProductIndex].qty;
-                return updatedProducts;
-            });
-        } else {
-            // Add new product to the list
+            if (existingProduct) {
+                // Return a NEW array with a NEW object for the updated item
+                return prevProducts.map((p) =>
+                    p.id === product.id
+                        ? {
+                            ...p,
+                            qty: p.qty + 1,
+                            subTotal: p.purchase_price * (p.qty + 1)
+                        }
+                        : p
+                );
+            }
+
+            // Add new product
             const newProduct = {
                 id: product.id,
                 name: product.name,
@@ -310,307 +314,202 @@ export default function Purchase() {
                 qty: 1,
                 subTotal: product.purchase_price,
             };
-            setProducts((prevProducts) => [...prevProducts, newProduct]);
-        }
 
-        // Clear search term and results
+            return [...prevProducts, newProduct];
+        });
+
         setSearchTerm("");
         setSearchResults([]);
     };
+
     return (
-        <>
-            <div className="container-fluid">
-                <div className="card">
-                    <div className="card-body">
-                        <div className="row">
-                            <div className="mb-3 col-md-6">
-                                <label htmlFor="date" className="form-label">
-                                    Purchase Date
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <div>
-                                    <DatePicker
-                                        name="date"
-                                        className="form-control"
-                                        placeholderText="Enter purchase date"
-                                        selected={date}
-                                        dateFormat="yyyy-MM-dd"
-                                        onChange={(date) => {
-                                            const formattedDate = date
-                                                ? date
-                                                      .toISOString()
-                                                      .split("T")[0]
-                                                : null;
-                                            setDate(formattedDate);
-                                        }}
-                                    />
+        <div className="container-fluid">
+            <Toaster position="top-right" />
+
+            <div className="row">
+                {/* Left Side: Product Selection & Table */}
+                <div className="col-lg-9">
+                    <div className="card shadow-sm border-0 min-vh-50">
+                        <div className="card-header bg-white py-3">
+                            <div className="row align-items-center pb-4">
+                                <div className="col-md-3">
+                                    <label className="small font-weight-bold text-uppercase text-muted mb-1">Purchase Date</label>
+                                    <div className="d-flex">
+                                        <DatePicker
+                                            className="form-control"
+                                            selected={date ? new Date(date) : null}
+                                            dateFormat="yyyy-MM-dd"
+                                            onChange={(d) => setDate(d ? d.toISOString().split("T")[0] : null)}
+                                            placeholderText="Select Date"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-5">
+                                    <label className="small font-weight-bold text-uppercase text-muted mb-1">Supplier</label>
+                                    <Suppliers setSupplierId={setSupplierId} oldSupplier={selectedSupplier} />
                                 </div>
                             </div>
-                            <div className="mb-3 col-md-6">
-                                <label
-                                    htmlFor="supplier"
-                                    className="form-label"
-                                >
-                                    Supplier
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <Suppliers
-                                    setSupplierId={setSupplierId}
-                                    oldSupplier={selectedSupplier}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="card">
-                    <div className="card-body">
-                        <div className="row mb-2">
-                            <div className="input-group col-6">
-                                <div className="input-group-prepend">
-                                    <span className="input-group-text">
-                                        <i className="fas fa-search"></i>
-                                    </span>
+
+                            <div className="input-group border rounded-2 overflow-hidden bg-light">
+                                <div className="input-group-prepend border-0">
+                                    <span className="input-group-text bg-transparent border-0"><i className="fas fa-barcode text-muted"></i></span>
                                 </div>
+
                                 <input
-                                    type="search"
-                                    className="form-control form-control-lg"
+                                    type="text"
+                                    className="form-control border-0 bg-transparent"
                                     value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    placeholder="Enter product barcode/name"
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Scan barcode or type product name..."
+                                    autoFocus
                                 />
-                                <button
-                                    className="btn bg-gradient-primary ml-2"
-                                    onClick={handleSearchAdd}
-                                >
-                                    Add Product
-                                </button>
                             </div>
+
+                            {
+                                searchResults.length > 0 && (
+                                    <div className="position-absolute w-100 shadow-lg rounded mt-1" style={{ zIndex: 1000, left: 0, right: 0 }}>
+                                        <div className="list-group">
+                                            {searchResults.map((product) => (
+                                                <button key={product.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" onClick={() => handleProductSelect(product)} >
+                                                    <div>
+                                                        <h6 className="mb-0 font-weight-bold">
+                                                            {product.name} <span className="text-muted small">{product.brand}</span>
+                                                        </h6>
+                                                        <small className="text-muted">Stock: {product.quantity} | SKU: {product.sku}</small>
+                                                    </div>
+                                                    <span className="text-muted font-weigh">
+                                                        {product.currency} {Number(product.purchase_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            }
                         </div>
-                        {/* Display search results below the input */}
-                        {searchResults.length > 0 && (
-                            <div className="row mb-2">
-                                <div
-                                    className="col-6"
-                                    style={{
-                                        maxHeight: "200px",
-                                        overflowY: "auto",
-                                    }}
-                                >
-                                    <ul className="list-group">
-                                        {searchResults.map((product) => (
-                                            <li
-                                                key={product.id}
-                                                className="list-group-item"
-                                                onClick={() =>
-                                                    handleProductSelect(product)
-                                                }
-                                                style={{ cursor: "pointer" }}
-                                            >
-                                                {product.name} - $
-                                                {product.price}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        )}
-                        <div className="row">
-                            <div className="col-12">
-                                <table className="table table-sm table-bordered text-center">
-                                    <thead>
+
+                        <div className="card-body p-0 pb-4">
+                            <div className="table-responsive">
+                                <table className="table table-hover mb-0">
+                                    <thead className="thead-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>Product Name</th>
-                                            <th>Purchase Price</th>
-                                            <th>Current Stock</th>
-                                            <th>Qty</th>
-                                            <th>Sub Total</th>
-                                            <th>Action</th>
+                                            <th className="px-4">Product Details</th>
+                                            <th width="150">Unit Price</th>
+                                            <th width="120" className="text-center">Qty</th>
+                                            <th width="150" className="text-right px-4">Subtotal</th>
+                                            <th width="50"></th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
-                                        {products.map((product, index) => (
-                                            <tr key={product.id}>
-                                                <td>{index + 1}</td>
-                                                <td>{product.name}</td>
-                                                <td className="d-flex align-items-center justify-content-center">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        className="form-control w-50"
-                                                        value={
-                                                            product.purchase_price
-                                                        }
-                                                        onChange={(e) =>
-                                                            handlePriceChange(
-                                                                product.id,
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </td>
-                                                <td>{product.stock}</td>
-                                                <td className="d-flex align-items-center justify-content-center">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        className="form-control w-50"
-                                                        value={product.qty}
-                                                        onChange={(e) =>
-                                                            handleQtyChange(
-                                                                product.id,
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </td>
-                                                <td>
-                                                    {product.subTotal.toFixed(
-                                                        2
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="btn btn-danger btn-sm"
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                product.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {
+                                            products.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="5" className="text-center py-5 text-muted">
+                                                        <i className="fas fa-shopping-cart fa-3x mb-3 opacity-2"></i>
+                                                        <p>
+                                                            Add products you've purchased by searching from above
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                products.map((product) => (
+                                                    <tr key={product.id}>
+                                                        <td className="px-4 align-middle">
+                                                            <div className="font-weight-bold">{product.name}</div>
+                                                            <small className="text-muted">Current Stock: {product.stock}</small>
+                                                        </td>
+
+                                                        <td className="align-middle">
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm text-right font-weight-bold border-0 bg-light"
+                                                                value={product.purchase_price}
+                                                                onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                                                                onWheel={(e) => e.target.blur()}
+                                                            />
+                                                        </td>
+
+                                                        <td className="align-middle">
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm text-center font-weight-bold"
+                                                                value={product.qty}
+                                                                onChange={(e) => handleQtyChange(product.id, e.target.value)}
+                                                                onWheel={(e) => e.target.blur()}
+                                                            />
+                                                        </td>
+
+                                                        <td className="align-middle text-right px-4 font-weight-bold">
+                                                            {product.currency} {Number(product.subTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                        </td>
+
+                                                        <td className="align-middle text-center">
+                                                            <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(product.id)}>
+                                                                <i className="fas fa-times-circle"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+                                        }
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <div className="row">
-                            <div className="col-6"></div>
-                            <div className="col-6">
-                                <div className="table-responsive">
-                                    <table className="table table-sm">
-                                        <tbody>
-                                            <tr>
-                                                <th>Subtotal:</th>
-                                                <td className="text-right">
-                                                    {totals.subTotal.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Tax:</th>
-                                                <td className="text-right">
-                                                    {totals.tax.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Discount:</th>
-                                                <td className="text-right">
-                                                    {totals.discount.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Shipping:</th>
-                                                <td className="text-right">
-                                                    {totals.shipping.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Grand Total:</th>
-                                                <td className="text-right">
-                                                    {totals.grandTotal.toFixed(
-                                                        2
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
-                <div className="card">
-                    <div className="card-body">
-                        <div className="row">
-                            <div className="mb-3 col-md-4">
-                                <label htmlFor="tax" className="form-label">
-                                    Tax
-                                </label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    value={tax}
-                                    min="0"
-                                    onChange={(e) =>
-                                        setTax(parseFloat(e.target.value) || 0)
-                                    }
-                                    placeholder="Enter tax"
-                                    name="tax"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3 col-md-4">
-                                <label
-                                    htmlFor="discount"
-                                    className="form-label"
-                                >
-                                    Discount
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="form-control"
-                                    value={discount}
-                                    onChange={(e) =>
-                                        setDiscount(
-                                            parseFloat(e.target.value) || 0
-                                        )
-                                    }
-                                    placeholder="Enter discount"
-                                    name="discount"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3 col-md-4">
-                                <label
-                                    htmlFor="shipping"
-                                    className="form-label"
-                                >
-                                    Shipping Charge
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="form-control"
-                                    value={shipping}
-                                    onChange={(e) =>
-                                        setShipping(
-                                            parseFloat(e.target.value) || 0
-                                        )
-                                    }
-                                    placeholder="Enter shipping"
-                                    name="shipping"
-                                    required
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button
-                    type="submit"
-                    className="btn btn-md bg-gradient-primary"
-                    onClick={handleSubmit}
-                >
-                    Create
-                </button>
-            </div>
 
-            <Toaster position="top-right" reverseOrder={false} />
-        </>
+                {/* Right Side: Calculation & Actions */}
+                <div className="col-lg-3">
+                    <div className="card shadow-sm border-0 sticky-top" style={{ top: '20px' }}>
+                        <div className="card-header bg-primary text-white text-center py-3">
+                            <h5 className="mb-0">Order Summary</h5>
+                        </div>
+
+                        <div className="card-body">
+                            <ul className="list-group list-group-flush mb-3">
+                                <li className="list-group-item d-flex justify-content-between px-0 bg-transparent">
+                                    <span>Subtotal</span>
+                                    <span className="font-weight-bold">{totals.subTotal.toLocaleString()}</span>
+                                </li>
+
+                                <li className="list-group-item px-0 bg-transparent border-0 pb-0">
+                                    <label className="small text-muted mb-1">Tax Adjustments</label>
+                                    <input type="number" className="form-control form-control-sm text-right" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} onWheel={(e) => e.target.blur()} />
+                                </li>
+
+                                <li className="list-group-item px-0 bg-transparent border-0 pb-0">
+                                    <label className="small text-muted mb-1">Discount</label>
+                                    <input type="number" className="form-control form-control-sm text-right text-danger" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} onWheel={(e) => e.target.blur()} />
+                                </li>
+
+                                <li className="list-group-item px-0 bg-transparent border-0">
+                                    <label className="small text-muted mb-1">Shipping</label>
+                                    <input type="number" className="form-control form-control-sm text-right" value={shipping} onChange={(e) => setShipping(parseFloat(e.target.value) || 0)} onWheel={(e) => e.target.blur()} />
+                                </li>
+                            </ul>
+
+                            <div className="p-3 bg-light rounded-lg text- mb-3">
+                                <div className="small text-uppercase text-muted mb-1 font-weight-bold">Grand Total</div>
+                                <h4 className="mb-0 font-weight-bold">
+                                    KES {totals.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </h4>
+                            </div>
+
+                            <button
+                                className="btn btn-primary btn-block shadow shadow-sm py-3 font-weight-bold"
+                                onClick={handleSubmit}
+                                disabled={totals.grandTotal <= 0}
+                            >
+                                <i className="fas fa-check-circle mr-2"></i> {purchaseId ? 'Update Purchase' : 'Complete Purchase'}
+                            </button>
+
+                            <a href="/admin/purchase" className="btn btn-link btn-block text-muted mt-2 small">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

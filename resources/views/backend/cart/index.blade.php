@@ -1,5 +1,5 @@
 @extends('backend.master')
-@section('title', 'Pos')
+@section('title', 'New Order')
 @section('content')
 <div id="cart"></div>
 @push('style')

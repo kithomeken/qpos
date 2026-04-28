@@ -7,6 +7,24 @@ import WarningSound from "../sounds/beep-02.mp3";
 import playSound from "../utils/playSound";
 
 export default function Cart({ carts, setCartUpdated, cartUpdated }) {
+    const [loadingId, setLoadingId] = useState(null);
+
+    // Optimized Request Handler
+    async function handleUpdate(action, id) {
+        setLoadingId(id);
+        try {
+            const res = await axios.put(`/admin/cart/${action}`, { id });
+            setCartUpdated(!cartUpdated);
+            playSound(SuccessSound);
+            // Optional: toast.success(res?.data?.message); // Removed to reduce noise in fast scanning
+        } catch (err) {
+            playSound(WarningSound);
+            toast.error(err.response?.data?.message || "Update failed");
+        } finally {
+            setLoadingId(null);
+        }
+    }
+
     function increment(id) {
         axios
             .put("/admin/cart/increment", {
@@ -22,6 +40,7 @@ export default function Cart({ carts, setCartUpdated, cartUpdated }) {
                 toast.error(err.response.data.message);
             });
     }
+
     function decrement(id) {
         axios
             .put("/admin/cart/decrement", {
@@ -37,6 +56,7 @@ export default function Cart({ carts, setCartUpdated, cartUpdated }) {
                 toast.error(err.response.data.message);
             });
     }
+
     function destroy(id) {
         Swal.fire({
             title: "Are you sure you want to delete this item?",
@@ -69,87 +89,89 @@ export default function Cart({ carts, setCartUpdated, cartUpdated }) {
             }
         });
     }
+
     return (
-        <>
-            <div className="user-cart">
-                <div className="card">
-                    <div className="card-body">
-                        <div className="responsive-table">
-                            <table className="table table-striped">
-                                <thead>
-                                    <tr className="text-center">
-                                        <th>Name</th>
-                                        <th>Quantity</th>
-                                        <th></th>
-                                        <th>Price</th>
-                                        <th>Total</th>
+        <div className="pos-cart-container h-100">
+            <div className="card shadow-none border-0 h-100">
+                {/* <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0 font-weight-bold flex-grow-1 text-primary">
+                        <i className="fas fa-shopping-cart mr-2"></i>
+                        Current Order
+                    </h6>
+
+                    <span className="badge badge-1 badge-light text-muted">{carts.length} Item(s)</span>
+                </div> */}
+
+                <div className="card-body p-0" style={{ overflowY: 'auto', maxHeight: '60vh' }}>
+                    {carts.length === 0 ? (
+                        <div className="text-center py-5">
+                            <i className="fas fa-cart-plus fa-3x text-muted mb-3"></i>
+                            <p className="text-muted">Cart is empty</p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-borderless align-middle mb-0">
+                                <thead className="thead border-bottom">
+                                    <tr className="small text-uppercase text-muted">
+                                        <th className="px-2">Product</th>
+                                        <th className="text-center">Qty</th>
+                                        <th className="text-right px-3">Total</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
-                                    {carts.map((item) => (
-                                        <tr key={item.id}>
-                                            <td>{item.product.name}</td>
-                                            <td className="d-flex align-items-center">
-                                                <button
-                                                    className="btn btn-warning btn-sm"
-                                                    onClick={() =>
-                                                        decrement(item.id)
-                                                    }
-                                                >
-                                                    <i className="fas fa-minus"></i>
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    className="form-control form-control-sm qty ml-1 mr-1"
-                                                    value={item.quantity}
-                                                    disabled
-                                                />
-                                                <button
-                                                    className="btn btn-success btn-sm"
-                                                    onClick={() =>
-                                                        increment(item.id)
-                                                    }
-                                                >
-                                                    <i className="fas fa-plus "></i>
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-danger btn-sm mr-3"
-                                                    onClick={() =>
-                                                        destroy(item.id)
-                                                    }
-                                                >
-                                                    <i className="fas fa-trash "></i>
-                                                </button>
-                                            </td>
-                                            <td className="text-right">
-                                                {item?.product?.discounted_price}
-                                                {item?.product?.price >
-                                                item?.product
-                                                    ?.discounted_price ? (
-                                                    <>
-                                                        <br />
-                                                        <del>
-                                                            {item?.product?.price}
-                                                        </del>
-                                                    </>
-                                                ) : (
-                                                    ""
-                                                )}
-                                            </td>
-                                            <td className="text-right">
-                                                {item?.row_total}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {
+                                        carts.map((item) => (
+                                            <tr key={item.id} className="border-bottom">
+                                                <td className="px-2 py-2">
+                                                    <div className="font-weight-bold text-dark mb-0">
+                                                        {item.product.name}
+                                                    </div>
+
+                                                    <div className="small text-muted font-weight-normal">
+                                                        {item.currency} {Number(item.product.discounted_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+
+                                                        {item.product.price > item.product.discounted_price && (
+                                                            <del className="text-muted ml-2 font-weight-normal">{item.product.price}</del>
+                                                        )} | {item.brand}
+                                                    </div>
+                                                </td>
+
+                                                <td className="align-middle px-2 py-2">
+                                                    <div className="d-flex align-items-center justify-content-between bg-transparent" style={{width: '120px', margin: '0 auto', padding: '2px 0'}}>
+                                                        <button className="btn btn-xs btn-light shadow-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '28px', height: '28px', backgroundColor: '#f8f9fa', border: '1px solid #eee'}} onClick={() => item.quantity > 1 ? handleUpdate('decrement', item.id) : destroy(item.id)} disabled={loadingId === item.id}>
+                                                            <i className="fas fa-minus fa-xs text-secondary"></i>
+                                                        </button>
+
+                                                        <span className="font-weight-bold text-dark" style={{ fontSize: '1rem' }}>
+                                                            {item.quantity}
+                                                        </span>
+
+                                                        <button className="btn btn-xs btn-light shadow-none rounded-circle d-flex align-items-center justify-content-center" style={{width: '28px', height: '28px', backgroundColor: '#f8f9fa', border: '1px solid #eee'}} onClick={() => handleUpdate('increment', item.id)} disabled={loadingId === item.id}>
+                                                            <i className="fas fa-plus fa-xs text-secondary"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+
+                                                <td className="text-right px-2 py-2 align-middle">
+                                                    <div className="font-weight-n text-muted">
+                                                        {item.currency} {Number(item.row_total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    </div>
+
+                                                    <button className="btn btn-link btn-sm text-danger p-0" onClick={() => destroy(item.id)} title="Remove item">
+                                                        <i className="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    }
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
-            <Toaster position="top-right" reverseOrder={false} />
-        </>
+            <Toaster position="top-right" />
+        </div>
     );
 }

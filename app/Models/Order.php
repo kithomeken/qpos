@@ -13,20 +13,51 @@ class Order extends Model
 
     protected $guarded = [];
     protected $appends = ['total_item'];
+
     public function products()
     {
         return $this->hasMany(OrderProduct::class);
     }
+
     public function transactions()
     {
         return $this->hasMany(OrderTransaction::class);
     }
-    public function customer(){
+
+    public function customer()
+    {
         return $this->belongsTo(Customer::class);
     }
+
+    /**
+     * Get the payment method associated with the order.
+     */
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethods::class);
+    }
+
     public function getTotalItemAttribute()
     {
         return $this->products()->sum('quantity');
     }
-   
+
+    public static function generateOrderReference()
+    {
+        // Characters that are easy to read (Excluded: I, L, 1, 0, O)
+        $characters = '1234567890';
+        $finalCode = '';
+
+        // Generate a random 13-character string from our clean set
+        for ($i = 0; $i < 13; $i++) {
+            $finalCode .= $characters[rand(0, strlen($characters) - 1)];
+        }
+
+        // Ensure Uniqueness (Recursion)
+        if (self::where('reference_no', $finalCode)->exists()) {
+            return self::generateOrderReference();
+        }
+
+        return $finalCode;
+    }
 }

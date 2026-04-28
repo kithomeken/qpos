@@ -13,6 +13,7 @@ use App\Http\Controllers\Backend\Product\CategoryController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\PaymentMethodsController;
 use App\Http\Controllers\Backend\RolePermission\PermissionController;
 use App\Http\Controllers\Backend\Pos\OrderController;
 use App\Http\Controllers\Backend\Product\BrandController;
@@ -70,6 +71,12 @@ Route::prefix('admin')->as('backend.admin.')->middleware(['admin'])->group(funct
     Route::resource('products', ProductController::class);
     Route::resource('units', UnitController::class);
     Route::resource('currencies', CurrencyController::class);
+
+    # Payments Methods Resource
+    Route::resource('payments', PaymentMethodsController::class);
+    Route::get('payments/default/{id}', [PaymentMethodsController::class, 'setDefault'])->name('payments.setDefault');
+    Route::get('payments/activate/{id}', [PaymentMethodsController::class, 'activate'])->name('payments.activate');
+
     Route::match(['get', 'post'], 'import/products', [ProductController::class,'import'])->name('products.import');
     Route::get('currencies/default/{id}', [CurrencyController::class, 'setDefault'])->name('currencies.setDefault');
     Route::get('customers/orders/{id}', [CustomerController::class, 'orders'])->name('customers.orders');

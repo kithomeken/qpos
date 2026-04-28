@@ -18,42 +18,48 @@ class PurchaseController extends Controller
      */
     public function index(Request $request)
     {
-
         abort_if(!auth()->user()->can('purchase_view'), 403);
+
         if ($request->ajax()) {
             $purchases = Purchase::with('supplier')->latest()->get();
+
             return DataTables::of($purchases)
                 ->addIndexColumn()
                 ->addColumn('supplier', fn($data) => $data->supplier->name)
+                ->addColumn('purchased_by', fn($data) => $data->user->name)
                 ->addColumn('id', function ($data) {
                     return '#' . $data->id;
                 })
-                ->addColumn('total', fn($data) => $data->grand_total)
-                ->addColumn('created_at', fn($data) => \Carbon\Carbon::parse($data->date)->format('d M, Y')) // Using Carbon for formatting
+                ->addColumn('sub_total', fn($data) => number_format($data->sub_total, 2))
+                ->addColumn('discount', fn($data) => number_format($data->discount_value, 2))
+                ->addColumn('shipping', fn($data) => number_format($data->shipping, 2))
+                ->addColumn('tax', fn($data) => number_format($data->tax, 2))
+                ->addColumn('total', fn($data) => number_format($data->grand_total, 2))
+                ->addColumn('purchase_date', fn($data) => \Carbon\Carbon::parse($data->date)->format('d M, Y'))
                 ->addColumn('action', function ($data) {
                     return '<div class="btn-group">
-                    <button type="button" class="btn bg-gradient-primary btn-flat">Action</button>
-                    <button type="button" class="btn bg-gradient-primary btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
-                      <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <div class="dropdown-menu" role="menu">
-                      <a class="dropdown-item" href="' . route('backend.admin.purchase.create', ['purchase_id' => $data->id]) . '">
-                    <i class="fas fa-edit"></i> Edit
-                </a> 
-  <a class="dropdown-item" href="' . route('backend.admin.purchase.products', $data->id) . '">
-                <i class="fas fa-eye"></i> View
-            </a>
-                    </div>
-                  </div>';
+                            <button type="button" class="btn bg-gradient-primary btn-flat">Action</button>
+                            <button type="button" class="btn bg-gradient-primary btn-flat dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+
+                            <div class="dropdown-menu" role="menu">
+                                <a class="dropdown-item" href="' . route('backend.admin.purchase.create', ['purchase_id' => $data->id]) . '">
+                                <i class="fas fa-edit"></i> Edit
+                            </a> 
+
+                            <a class="dropdown-item" href="' . route('backend.admin.purchase.products', $data->id) . '">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </div>
+                    </div>';
                 })
-                ->rawColumns(['supplier', 'id', 'total', 'created_at', 'action'])
+                ->rawColumns(['supplier', 'id', 'total', 'purchase_date', 'purchased_by', 'action'])
                 ->toJson();
         }
 
-
         return view('backend.purchase.index');
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -139,9 +145,9 @@ class PurchaseController extends Controller
                     ]);
                     // Step 3: Create purchase items
                     foreach ($validatedData['products'] as $product) {
-                        $existingProduct = Product::findOrFail($product['id']); 
+                        $existingProduct = Product::findOrFail($product['id']);
                         // Find the existing purchase item, if any, and get its quantity or set to 0
-                        $oldPurchaseItem = PurchaseItem::find($product['item_id']??0);
+                        $oldPurchaseItem = PurchaseItem::find($product['item_id'] ?? 0);
                         $oldQuantity = $oldPurchaseItem ? $oldPurchaseItem->quantity : 0;
                         PurchaseItem::updateOrCreate(
                             [

@@ -14,7 +14,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             StartUpSeeder::class,
-           // Please comment out the following seeders when running in production for the client
+
+            # Payment Methods
+            PaymentMethodSeeder::class,
+
+            // Please comment out the following seeders when running in production for the client
             ProductSeeder::class,
             CustomerSeeder::class,
             SupplierSeeder::class,

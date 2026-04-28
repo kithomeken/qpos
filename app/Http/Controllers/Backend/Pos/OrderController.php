@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend\Pos;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderTransaction;
+use App\Models\PaymentMethods;
 use App\Models\PosCart;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class OrderController extends Controller
     {
         if ($request->ajax()) {
             $orders = Order::with('customer')->get();
+
             return DataTables::of($orders)
                 ->addIndexColumn()
                 ->addColumn('saleId', fn($data) => "#" . $data->id)
@@ -86,18 +88,62 @@ class OrderController extends Controller
             'order_discount.numeric' => 'The order discount must be a number.',
             'paid.numeric' => 'The amount paid must be a number.',
         ]);
+
+        $request->validate([
+            'customer_id' => [
+                'required',
+                'exists:customers,id',
+                'integer',
+            ],
+            'order_discount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'paid' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            // New Payment Validation
+            'payment_method_code' => [
+                'required',
+                'exists:payment_methods,code',
+                'string',
+            ],
+            'surcharge_amount' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+        ], [
+            'customer_id.required' => 'Please select a customer.',
+            'customer_id.exists' => 'The selected customer does not exist.',
+            'order_discount.numeric' => 'The order discount must be a number.',
+            'paid.numeric' => 'The amount paid must be a number.',
+
+            // Custom Payment Messages
+            'payment_method_code.required' => 'Please select a payment method.',
+            'payment_method_code.exists' => 'The selected payment method code is invalid.',
+            'surcharge_amount.numeric' => 'The surcharge amount must be a number.',
+        ]);
+
         $carts = PosCart::with('product')->where('user_id', auth()->id())->get();
+
         $order = Order::create([
             'customer_id' => $request->customer_id,
             'user_id' => $request->user()->id,
         ]);
-        $totalAmountOrder = 0;
+
         $orderDiscount = $request->order_discount;
+        $totalAmountOrder = 0;
+
         foreach ($carts as $cart) {
             $mainTotal = $cart->product->price * $cart->quantity;
             $totalAfterDiscount = $cart->product->discounted_price * $cart->quantity;
             $discount = $mainTotal - $totalAfterDiscount;
             $totalAmountOrder += $totalAfterDiscount;
+
             $order->products()->create([
                 'quantity' => $cart->quantity,
                 'price' => $cart->product->price,
@@ -107,18 +153,43 @@ class OrderController extends Controller
                 'total' => $totalAfterDiscount,
                 'product_id' => $cart->product->id,
             ]);
+
+            // Inventory Management
             $cart->product->quantity = $cart->product->quantity - $cart->quantity;
             $cart->product->save();
         }
-        $total = $totalAmountOrder - $orderDiscount;
-        $due = $total - $request->paid;
+
+        // Calculate Base Total (Products - Discount)
+        $baseTotal = $totalAmountOrder - $orderDiscount;
+
+        // Add Surcharge
+        $surcharge = (float) $request->surcharge_amount;
+        $grandTotal = $baseTotal + $surcharge;
+
+        // Calculate Final Due Amount
+        $due = $grandTotal - $request->paid;
+
+        // 4. Save Payment & Surcharge Details to Order
+        $paymentMethod = PaymentMethods::where('code', $request->payment_method_code)->first();
+
+        $order->payment_methods_id = $paymentMethod->id;
+        $order->surcharge_type = $paymentMethod->surcharge_type;
+        $order->surcharge_value = $paymentMethod->surcharge_value;
+        $order->surcharge_amount = $surcharge;
+
+        // Save Final Figures
         $order->sub_total = $totalAmountOrder;
         $order->discount = $orderDiscount;
         $order->paid = $request->paid;
-        $order->total = round((float)$total, 2);
+        $order->total = round((float)$grandTotal, 2);
         $order->due = round((float)$due, 2);
         $order->status = round((float)$due, 2) <= 0;
+
+        # Order Reference Number
+        $order->reference_no = Order::generateOrderReference();
+
         $order->save();
+
         //create order transaction
         if ($request->paid > 0) {
             $orderTransaction = $order->transactions()->create([
@@ -216,8 +287,9 @@ class OrderController extends Controller
 
     public function posInvoice($id)
     {
-        $order = Order::with(['customer', 'products.product'])->findOrFail($id);
-        $maxWidth = readConfig('receiptMaxwidth')??'300px';
+        $order = Order::with(['customer', 'products.product', 'products.product.unit'])->findOrFail($id);
+        $maxWidth = readConfig('receiptMaxwidth') ?? '300px';
+
         return view('backend.orders.pos-invoice', compact('order', 'maxWidth'));
     }
 }

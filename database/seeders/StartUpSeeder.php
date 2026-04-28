@@ -17,23 +17,28 @@ class StartUpSeeder extends Seeder
      */
     public function run(): void
     {
-
         $user = User::create([
             'name' => 'Mr Admin',
             'email' => 'demo@qtecsolution.net',
             'password' => bcrypt(87654321),
             'username' => uniqid()
         ]);
+
+        # Default Customer
         Customer::create([
             'name' => "Walking Customer",
             'phone' => "012345678",
         ]);
+
+        # Default supplier
         Supplier::create([
             'name' => "Own Supplier",
             'phone' => "012345678",
         ]);
+
         $role = Role::create(['name' => 'Admin']);
         $user->syncRoles($role);
+
         $this->call([
             UnitSeeder::class,
             CurrencySeeder::class,
